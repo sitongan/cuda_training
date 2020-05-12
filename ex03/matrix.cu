@@ -20,8 +20,8 @@ __global__ void kernel( int *a, int dimx, int dimy ) {
 int main() {
     cudaSetDevice(MYDEVICE);
 // Part 1 and 4 of 4: set the dimensions of the matrix
-    int dimx = 4;
-    int dimy = 4;
+    int dimx = 19;
+    int dimy = 67;
     int num_bytes = dimx*dimy*sizeof(int);
 
     int *d_a=0, *h_a=0; // device and host pointers
@@ -37,10 +37,10 @@ int main() {
 
     // Part 2 of 4: define grid and block size and launch the kernel
     dim3 grid, block;
-    block.x = 2;
-    block.y = 2;
-    grid.x  = 2;
-    grid.y  = 2;
+    block.x = 8;
+    block.y = 8;
+    grid.x  = 3;
+    grid.y  = 9;
 
     kernel<<<grid, block>>>( d_a, dimx, dimy );
     // block until the device has completed
@@ -48,7 +48,7 @@ int main() {
     // check if kernel execution generated an error
     checkCUDAError("kernel execution");
     // device to host copy
-    cudaMemcpy( );
+    cudaMemcpy( h_a, d_a, num_bytes, cudaMemcpyDeviceToHost );
 
     // Check for any CUDA errors
     checkCUDAError("cudaMemcpy");
