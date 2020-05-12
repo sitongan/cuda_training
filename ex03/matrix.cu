@@ -8,8 +8,10 @@
 void checkCUDAError(const char *msg);
 // Part 2 of 4: implement the kernel
 __global__ void kernel( int *a, int dimx, int dimy ) {
-
-
+    if ( (blockDim.y*blockIdx.y +threadIdx.y) < dimy && (blockDim.x*blockIdx.x +threadIdx.x) < dimx){
+        int i = (blockDim.y*blockIdx.y +threadIdx.y)*dimx + blockDim.x*blockIdx.x +threadIdx.x;
+        a[i] = i;
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -18,15 +20,15 @@ __global__ void kernel( int *a, int dimx, int dimy ) {
 int main() {
     cudaSetDevice(MYDEVICE);
 // Part 1 and 4 of 4: set the dimensions of the matrix
-    int dimx = ;
-    int dimy = ;
+    int dimx = 4;
+    int dimy = 4;
     int num_bytes = dimx*dimy*sizeof(int);
 
     int *d_a=0, *h_a=0; // device and host pointers
 
     h_a = (int*)malloc(num_bytes);
     //allocate memory on the device
-    cudaMalloc( );
+    cudaMalloc((void**)&d_a, num_bytes );
 
     if( NULL==h_a || NULL==d_a ) {
         std::cerr << "couldn't allocate memory" << std::endl;
@@ -35,10 +37,10 @@ int main() {
 
     // Part 2 of 4: define grid and block size and launch the kernel
     dim3 grid, block;
-    block.x = ;
-    block.y = ;
-    grid.x  = ;
-    grid.y  = ;
+    block.x = 2;
+    block.y = 2;
+    grid.x  = 2;
+    grid.y  = 2;
 
     kernel<<<grid, block>>>( d_a, dimx, dimy );
     // block until the device has completed
