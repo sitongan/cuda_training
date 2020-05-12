@@ -8,7 +8,7 @@
 void checkCUDAError(const char *msg);
 
 // Part 3 of 5: implement the kernel
-__global__ void myFirstKernel(float* d_a  )
+__global__ void myFirstKernel(int* d_a  )
 {
     int i = blockDim.x*blockIdx.x +threadIdx.x;
     d_a[i] = blockIdx.x + threadIdx.x;
