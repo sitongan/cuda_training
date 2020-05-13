@@ -1,4 +1,4 @@
-#include <stdio.h>
+#include <iostream>
 // Here you can set the device ID that was assigned to you
 #define MYDEVICE 0
 __global__
@@ -56,6 +56,9 @@ int main(void)
   cudaFree(d_y);
   free(x);
   free(y);
+  
+  std::cout << "ElapsedTime: " << milliseconds << std::endl;
+  std::cout << "maxError: " << maxError << std::endl;
 
 }
 
