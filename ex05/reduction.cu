@@ -21,8 +21,11 @@ __global__ void block_sum(const double *input,
 {
   //fill me
   __shared__ double sdata[];
-
-
+  int i = blockDim.x * blockIdx.x + threadIdx.x;
+  if (i < n){
+    sdata[threadIdx.x] = input[i];
+    atomicAdd(per_block_results[blockIdx.x], sdata[threadIdx.x]);
+  }
 
 }
 
@@ -31,6 +34,9 @@ __global__ void block_sum(const double *input,
 ////////////////////////////////////////////////////////////////////////////////
 int main(void)
 {
+  
+  constexpr int blockDim = 1<<9;
+  
   // create array of 256ki elements
   const int num_elements = 1<<18;
   srand(time(NULL));
@@ -46,23 +52,33 @@ int main(void)
 
   //Part 1 of 6: move input to device memory
   double *d_input = 0;
-
+  cudaMalloc((void**)&d_input, num_elements * sizeof(double) );
+  cudaMemcpy(d_input, h_input, num_elements * sizeof(double), cudaMemcpyHostToDevice);
+  
   // Part 1 of 6: allocate the partial sums: How much space does it need?
   double *d_partial_sums_and_total = 0;
-
+  cudaMalloc((void**)&d_partial_sums_and_total, num_elements / blockDim * sizeof(double) );
+  
   // Part 1 of 6: launch one kernel to compute, per-block, a partial sum. How much shared memory does it need?
-  block_sum<<<num_blocks,block_size>>>(d_input, d_partial_sums_and_total, num_elements);
+  block_sum<<<num_elements / blockDim, blockDim, blockDim>>>(d_input, d_partial_sums_and_total, num_elements);
 
-  // Part 1 of 6: compute the sum of the partial sums
-  block_sum<<<>>>();
-
-  // Part 1 of 6: copy the result back to the host
+    // Part 1 of 6: copy the result back to the host
+  double *d_result = 0;
   double device_result = 0;
+  cudaMalloc((void**)&device_result, 1 * sizeof(double));
+  
+  // Part 1 of 6: compute the sum of the partial sums
+  block_sum<<<1, blockDim, blockDim>>>(d_partial_sums_and_total, device_result, num_elements / blockDim);
+  cudaMemcpy(&device_result, d_result, 1 * sizeof(double), cudaMemcpyDeviceToHost);
+
 
   std::cout << "Device sum: " << device_result << std::endl;
 
   // Part 1 of 6: deallocate device memory
 
+  cudaFree(d_input);
+  cudaFree(d_partial_sums_and_total);
+  cudaFree(d_result);
 
   return 0;
 }
