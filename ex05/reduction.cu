@@ -20,7 +20,7 @@ __global__ void block_sum(const double *input,
                           const size_t n)
 {
   //fill me
-  extern  __shared__ double sdata[];
+  __shared__ double sdata[64];
   int i = blockDim.x * blockIdx.x + threadIdx.x;
   if (i < n){
     sdata[threadIdx.x] = input[i];
@@ -31,11 +31,13 @@ __global__ void block_sum(const double *input,
       if (threadIdx.x < totalThreads){
         sdata[threadIdx.x] += sdata[threadIdx.x + totalThreads];        
       }
-      __syncthreads();
-    
     }
-    per_block_results[blockIdx.x] = sdata[0];
   }
+  __syncthreads();
+    
+    
+  per_block_results[blockIdx.x] = sdata[0];
+ 
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -44,7 +46,7 @@ __global__ void block_sum(const double *input,
 int main(void)
 {
   
-  const int blockDim = 1<<9;
+  const int blockDim = 64;
   
   // create array of 256ki elements
   const int num_elements = 1<<18;
@@ -62,14 +64,14 @@ int main(void)
   //Part 1 of 6: move input to device memory
   double *d_input = 0;
   cudaMalloc((void**)&d_input, num_elements * sizeof(double) );
-  cudaMemcpy(d_input, h_input, num_elements * sizeof(double), cudaMemcpyHostToDevice);
+  cudaMemcpy(d_input, h_input.data(), num_elements * sizeof(double), cudaMemcpyHostToDevice);
   
   // Part 1 of 6: allocate the partial sums: How much space does it need?
   double *d_partial_sums_and_total = 0;
   cudaMalloc((void**)&d_partial_sums_and_total, num_elements / blockDim * sizeof(double) );
   
   // Part 1 of 6: launch one kernel to compute, per-block, a partial sum. How much shared memory does it need?
-  block_sum<<<num_elements / blockDim, blockDim, blockDim>>>(d_input, d_partial_sums_and_total, num_elements);
+  block_sum<<<num_elements / blockDim, blockDim>>>(d_input, d_partial_sums_and_total, num_elements);
 
     // Part 1 of 6: copy the result back to the host
   double *d_result = 0;
@@ -77,7 +79,7 @@ int main(void)
   cudaMalloc((void**)&device_result, 1 * sizeof(double));
   
   // Part 1 of 6: compute the sum of the partial sums
-  block_sum<<<1, blockDim, blockDim>>>(d_partial_sums_and_total, device_result, num_elements / blockDim);
+  block_sum<<<64, blockDim>>>(d_partial_sums_and_total, d_result, num_elements / blockDim);
   cudaMemcpy(&device_result, d_result, 1 * sizeof(double), cudaMemcpyDeviceToHost);
 
 
