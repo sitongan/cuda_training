@@ -20,24 +20,22 @@ __global__ void block_sum(const double *input,
                           const size_t n)
 {
   //fill me
-  __shared__ double sdata[];
+  extern  __shared__ double sdata[];
   int i = blockDim.x * blockIdx.x + threadIdx.x;
   if (i < n){
     sdata[threadIdx.x] = input[i];
     //atomicAdd(&per_block_results[blockIdx.x], sdata[threadIdx.x]);
     int totalThreads = blockDim.x;
-    int halfThreads;
     while(totalThreads >1){
-      totalThreads = totalThreads >> 1;
+      totalThreads = (totalThreads >> 1);
       if (threadIdx.x < totalThreads){
-        sdata[threadIdx.x] += sdata[threadIdx.x + totalThreads];
-        
-        __syncthreads;
+        sdata[threadIdx.x] += sdata[threadIdx.x + totalThreads];        
       }
+      __syncthreads();
     
     }
     per_block_results[blockIdx.x] = sdata[0];
-
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
