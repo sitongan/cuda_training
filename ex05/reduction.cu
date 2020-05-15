@@ -79,11 +79,10 @@ int main(void)
   cudaMalloc((void**)&d_result, 1 * sizeof(double));
   
   // Part 1 of 6: launch one kernel to compute, per-block, a partial sum. How much shared memory does it need?
-  //block_sum<<<num_elements / blockDim, blockDim>>>(d_input, d_partial_sums_and_total, num_elements);
-  block_sum<<<1, blockDim>>>(d_input, d_result, num_elements);
+  block_sum<<<num_elements / blockDim, blockDim>>>(d_input, d_partial_sums_and_total, num_elements);
+  block_sum<<<1, blockDim>>>(d_partial_sums_and_total, d_result, num_elements / blockDim);
   
   // Part 1 of 6: compute the sum of the partial sums
-  //block_sum<<<1, blockDim>>>(d_partial_sums_and_total, d_result, num_elements / blockDim);
   cudaMemcpy(&device_result, d_result, 1 * sizeof(double), cudaMemcpyDeviceToHost);
 
 
