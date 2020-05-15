@@ -50,7 +50,8 @@ int main(void)
   const int blockDim = 512;
   
   // create array of 256ki elements
-  const int num_elements = 1<<18;
+  //const int num_elements = 1<<18;
+  const int num_elements = 512;
   srand(time(NULL));
   // generate random input on the host
   std::vector<double> h_input(num_elements);
@@ -71,17 +72,18 @@ int main(void)
   double *d_partial_sums_and_total = 0;
   cudaMalloc((void**)&d_partial_sums_and_total, num_elements / blockDim * sizeof(double) );
   
-  // Part 1 of 6: launch one kernel to compute, per-block, a partial sum. How much shared memory does it need?
-  block_sum<<<num_elements / blockDim, blockDim>>>(d_input, d_partial_sums_and_total, num_elements);
-
-    // Part 1 of 6: copy the result back to the host
+  // Part 1 of 6: copy the result back to the host
   double *d_result = 0;
   double device_result = 0;
   cudaMalloc((void**)&d_result, 1 * sizeof(double));
   
+  // Part 1 of 6: launch one kernel to compute, per-block, a partial sum. How much shared memory does it need?
+  //block_sum<<<num_elements / blockDim, blockDim>>>(d_input, d_partial_sums_and_total, num_elements);
+  block_sum<<<1, blockDim>>>(d_input, d_result, num_elements);
+  
   // Part 1 of 6: compute the sum of the partial sums
-  block_sum<<<1, blockDim>>>(d_partial_sums_and_total, d_result, num_elements / blockDim);
-  cudaMemcpy(&device_result, d_result, 1 * sizeof(double), cudaMemcpyDeviceToHost);
+  //block_sum<<<1, blockDim>>>(d_partial_sums_and_total, d_result, num_elements / blockDim);
+  //cudaMemcpy(&device_result, d_result, 1 * sizeof(double), cudaMemcpyDeviceToHost);
 
 
   std::cout << "Device sum: " << device_result << std::endl;
