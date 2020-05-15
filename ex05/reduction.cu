@@ -9,8 +9,8 @@
 
 double random_double(void)
 {
-
-  return static_cast<double>(rand()) / RAND_MAX;
+return 1.0;
+//  return static_cast<double>(rand()) / RAND_MAX;
 }
 
 
