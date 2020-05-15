@@ -20,10 +20,11 @@ __global__ void block_sum(const double *input,
                           const size_t n)
 {
   //fill me
-  __shared__ double sdata[512];
+  __shared__ double sdata[blockDim.x];
   int i = blockDim.x * blockIdx.x + threadIdx.x;
   if (i < n){
     sdata[threadIdx.x] = input[i];
+    __syncthreads();
     //atomicAdd(&per_block_results[blockIdx.x], sdata[threadIdx.x]);
     int totalThreads = blockDim.x;
     while(totalThreads >1){
@@ -83,7 +84,7 @@ int main(void)
   
   // Part 1 of 6: compute the sum of the partial sums
   //block_sum<<<1, blockDim>>>(d_partial_sums_and_total, d_result, num_elements / blockDim);
-  //cudaMemcpy(&device_result, d_result, 1 * sizeof(double), cudaMemcpyDeviceToHost);
+  cudaMemcpy(&device_result, d_result, 1 * sizeof(double), cudaMemcpyDeviceToHost);
 
 
   std::cout << "Device sum: " << device_result << std::endl;
