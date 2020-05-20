@@ -21,10 +21,10 @@ __global__ void block_sum(const double *input,
                           const size_t n)
 {
   //fill me
-  __shared__ double sdata[512];
-  int i = blockDim.x * blockIdx.x + threadIdx.x;
-  if (i < n){
-    sdata[threadIdx.x] = input[i];
+  __shared__ double sdata[256];
+  int i = 512 * blockIdx.x + threadIdx.x;
+  if (i + 256 < n){
+    sdata[threadIdx.x] = input[i] + input[i + 256];
     __syncthreads();
     //atomicAdd(&per_block_results[blockIdx.x], sdata[threadIdx.x]);
     int totalThreads = blockDim.x;
@@ -49,7 +49,7 @@ __global__ void block_sum(const double *input,
 int main(void)
 {
   
-  const int blockDim = 512;
+  const int blockDim = 256;
   
   // create array of 256ki elements
   const int num_elements = 1<<18;
@@ -72,7 +72,7 @@ int main(void)
   
   // Part 1 of 6: allocate the partial sums: How much space does it need?
   double *d_partial_sums_and_total = 0;
-  cudaMalloc((void**)&d_partial_sums_and_total, num_elements / blockDim * sizeof(double) );
+  cudaMalloc((void**)&d_partial_sums_and_total, num_elements / blockDim / 2 * sizeof(double) );
   
   // Part 1 of 6: copy the result back to the host
   double *d_result = 0;
@@ -86,8 +86,8 @@ int main(void)
   cudaEventRecord(start);
 
   // Part 1 of 6: launch one kernel to compute, per-block, a partial sum. How much shared memory does it need?
-  block_sum<<<num_elements / blockDim, blockDim>>>(d_input, d_partial_sums_and_total, num_elements);
-  block_sum<<<1, blockDim>>>(d_partial_sums_and_total, d_result, num_elements / blockDim);
+  block_sum<<<num_elements / blockDim / 2, blockDim>>>(d_input, d_partial_sums_and_total, num_elements);
+  block_sum<<<1, blockDim>>>(d_partial_sums_and_total, d_result, num_elements / blockDim /2);
   
   cudaEventRecord(stop);
 
